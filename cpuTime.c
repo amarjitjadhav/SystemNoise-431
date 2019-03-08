@@ -268,6 +268,8 @@ int calcCPU(process ** procArray, int size) {
         // Calculate average % of cpu usage for this process
         procArray[i]->cpuPercent = 100 * (procArray[i]->tTime / seconds);
     }
-    chdir("/../u/kodavis/CS431/Project/"); // Change back to working directory
+
+    // Enter your own username here!!!
+    chdir("/../u/<Your Username Here/CS431/Project/"); // Change back to working directory
     return 1;
 }
