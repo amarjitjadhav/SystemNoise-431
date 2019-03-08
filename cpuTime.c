@@ -2,14 +2,15 @@
  * Kobe Davis
  * Prof. Karavanic
  * CS 431
- * 1 March 2019
+ * 8 March 2019
  *
- * Group Research Project: Detecting and Mitigating System Noise
-*/
-
-
-/* This program will grab all currently running processes and
+ * -- Group Research Project: Detecting and Mitigating System Noise -- 
+ * This program will grab all currently running processes and
  * calculate, for each, their average CPU usage over their lifetime.
+ *
+ * Usage:
+ *      1. Compile: gcc -o cpu cpuTime.c -lm
+ *      2. Run: ./cpu
 */
 
 #include <stdio.h>
@@ -17,6 +18,8 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
+#include <math.h>
 
 typedef struct process {
     int pid;
@@ -33,15 +36,15 @@ typedef struct process {
 } process;
 
 int calcCPU(process **, int);
-int displayAll(process **, int);
-int display(process *);
 int compareAP(const void *, const void *);
 int compareTT(const void *, const void *);
 int compareTTC(const void *, const void *);
 int grabDirs(char ***, char ***);
 int allocateProcs(process ***, char **, char **, int);
+void writeFile(process **, int, char [100]);
 
 int main() {
+    char name[100];
     char ** stat = NULL;
     char ** status = NULL;
     process ** procArray = NULL;
@@ -54,22 +57,49 @@ int main() {
     }
 
     qsort(procArray, numProc, sizeof(process*), compareAP);
+    writeFile(procArray, numProc, "avg.dat");
+    printf("\nAverage CPU usage written to:\t\t\tavg.dat\n");
 
-    if(!displayAll(procArray, numProc)) {
-        fprintf(stderr, "\nError at display.\n");
-        exit(EXIT_FAILURE);
-    }
+    qsort(procArray, numProc, sizeof(process*), compareTT);
+    writeFile(procArray, numProc, "total.dat");
+    printf("Total CPU time written to:\t\t\ttotal.dat\n");
 
-    // need to put 3 writes and 3 qsorts right here (that includes the above qsort)
-    // will have 3 data files which have data sorted by:
-    //      1. avg cpu usage per lifetime
-    //      2. total cpu usage
-    //      3. total cpu usage including child (turns out there are processes with low self cpu time but reallly high child cpu time)
-    //
-    //  afterwards, loop that sleeps and samples for some given amount of time should be placed
-    //  before grabDirs() and after last write.
+    qsort(procArray, numProc, sizeof(process*), compareTTC);
+    writeFile(procArray, numProc, "child.dat");
+    printf("Total CPU time including children written to:\tchild.dat\n\n");
+
+    printf("Data can be read using readCPU.c\nUsage:            \
+            \n\t1. Compile:\tgcc -o read readCPU.c              \
+            \n\t2. Run:\t\t./read <filename> (without <>)\n\n"
+    );
 
     exit(EXIT_SUCCESS);
+}
+
+// Writes to file through a temporary array of process structs
+// because writing and reading to and from file with pointers
+// to dynamically allocated memory makes things more difficult.
+// This function will also only write the top 20 of each section
+// to file, since everything is else is relatively useless.
+void writeFile(process ** procArray, int numProc, char name[100]) {
+    int size = fmin(numProc, 20);
+    process temp[size];
+    for(int i = 0; i < size; ++i) {
+        temp[i].pid           = procArray[i]->pid;
+        temp[i].uid           = procArray[i]->uid;
+        temp[i].uTime         = procArray[i]->uTime;
+        temp[i].sTime         = procArray[i]->sTime;
+        temp[i].tTime         = procArray[i]->tTime;
+        temp[i].cuTime        = procArray[i]->cuTime;
+        temp[i].csTime        = procArray[i]->csTime;
+        temp[i].ctTime        = procArray[i]->ctTime;
+        temp[i].startTime     = procArray[i]->startTime;
+        temp[i].cpuPercent    = procArray[i]->cpuPercent;
+        strcpy(temp[i].name, procArray[i]->name);
+    }
+    FILE * fp = fopen(name, "w");
+    fwrite(temp, sizeof(process), size, fp);
+    fclose(fp);
 }
 
 // Comparator function for built-in qsort.
@@ -81,9 +111,9 @@ int compareTTC(const void * a, const void * b) {
     long double ctotalA = A->ctTime;
     long double ctotalB = B->ctTime;
 
-    if(ctotalA > ctotalB)
-        return 1;
     if(ctotalA < ctotalB)
+        return 1;
+    if(ctotalA > ctotalB)
         return -1;
     else
          return 0;
@@ -97,9 +127,9 @@ int compareTT(const void * a, const void * b) {
     long double totalA = A->tTime;
     long double totalB = B->tTime;
 
-    if(totalA > totalB)
-        return 1;
     if(totalA < totalB)
+        return 1;
+    if(totalA > totalB)
         return -1;
     else
          return 0;
@@ -140,6 +170,7 @@ int grabDirs(char *** stat, char *** status) {
             sprintf(statusList[numDir++], "/proc/%s/status", entry->d_name);
         }
     }
+    closedir(dirPtr);
 
     *stat = malloc(sizeof(char *) * numDir);
     *status = malloc(sizeof(char *) * numDir);
@@ -197,7 +228,8 @@ int allocateProcs(process *** procArray, char ** stat, char ** status, int numDi
         
         // Temp variables are used so that fscanf modifier types match (otherwise errors occur while reading in data)
         fscanf(statFile,
-               "%d %s %*c %*d %*d %*d %*d %*d %*u %*lu %*lu %*lu %*lu %lu %lu %ld %ld %*ld %*ld %*ld %*ld %llu",
+               "%d %s %*c %*d %*d %*d %*d %*d %*u %*lu %*lu     \
+               %*lu %*lu %lu %lu %ld %ld %*ld %*ld %*ld %*ld %llu",
                &pid, name, &uTime, &sTime, &cuTime, &csTime, &startTime  
         );
         strcpy(((*procArray)[j])->name, name); ((*procArray)[j])->pid = pid;
@@ -229,7 +261,6 @@ int calcCPU(process ** procArray, int size) {
 
         // Calculate total time w/ child process time included
         procArray[i]->ctTime = procArray[i]->tTime + ((procArray[i]->cuTime + procArray[i]->csTime) / Hz);
-        //printf("%d:\n\ttTime=%Lf\nctTime=%Lf\n", i, procArray[i]->tTime, procArray[i]->ctTime);
 
         // Turn total elapsed time of process into units of seconds (google "jiffies")
         seconds = sysUpTime - (procArray[i]->startTime / Hz);
@@ -237,32 +268,6 @@ int calcCPU(process ** procArray, int size) {
         // Calculate average % of cpu usage for this process
         procArray[i]->cpuPercent = 100 * (procArray[i]->tTime / seconds);
     }
-    return 1;
-}
-
-// Return value communicates success/failure.
-int displayAll(process ** procArray, int size) {
-    if(!procArray)
-        return 0;
-    for(int i = 0; i < size; ++i) {
-        printf("%d: ", i);
-        if(!display(procArray[i])) {
-            fprintf(stderr, "A process was found to be NULL unexpectedly.\n");
-            exit(EXIT_FAILURE);
-        }
-    }
-    return 1;
-}
-
-// Return value communicates success/failure.
-int display(process * proc) { // Single process display
-    if(!proc)
-        return 0;
-    printf("%s\n\tPID: %d\n\tAvg CPU Usage(%%): \t%Lf\n\tTotal CPU Time (s): \t%Lf\n\tw/ Children (s): \t%Lf\n",
-            proc->name,
-            proc->pid,
-            proc->cpuPercent,
-            proc->tTime,
-            proc->ctTime);
+    chdir("/../u/kodavis/CS431/Project/"); // Change back to working directory
     return 1;
 }
