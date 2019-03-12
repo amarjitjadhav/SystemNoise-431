@@ -5,7 +5,9 @@ Example:
     My username (aka user file for the given system) is kodavis, so I will do the following to correct the program,
 
         Before modification:
-            chdir("/../u/<Your Username Here>/CS431/Project/");
+            chdir("/../home/<Your Username Here>/");
 
         After I change it to be correct for me:
-            chdir("/../u/kodavis/CS431/Project/"); 
+            chdir("/../home/kodavis/"); 
+
+The idea is to modify the call to chdir() to place you back in your working directory so that the program can begin writing data to the output files.
