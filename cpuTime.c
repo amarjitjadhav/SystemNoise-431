@@ -56,17 +56,32 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    FILE * fp = fopen("names.dat", "a");
+
     qsort(procArray, numProc, sizeof(process*), compareAP);
     writeFile(procArray, numProc, "avg.dat");
     printf("\nAverage CPU usage written to:\t\t\tavg.dat\n");
+
+    for(int i = 0; i < numProc; ++i) {
+        fprintf(fp, "%s\n", procArray[i]->name);
+    }
 
     qsort(procArray, numProc, sizeof(process*), compareTT);
     writeFile(procArray, numProc, "total.dat");
     printf("Total CPU time written to:\t\t\ttotal.dat\n");
 
+    for(int i = 0; i < numProc; ++i) {
+        fprintf(fp, "%s\n", procArray[i]->name);
+    }
+
     qsort(procArray, numProc, sizeof(process*), compareTTC);
     writeFile(procArray, numProc, "child.dat");
     printf("Total CPU time including children written to:\tchild.dat\n\n");
+
+    for(int i = 0; i < numProc; ++i) {
+        fprintf(fp, "%s\n", procArray[i]->name);
+    }
+    fclose(fp);
 
     printf("Data can be read using readCPU.c\nUsage:            \
             \n\t1. Compile:\tgcc -o read readCPU.c              \
@@ -268,8 +283,6 @@ int calcCPU(process ** procArray, int size) {
         // Calculate average % of cpu usage for this process
         procArray[i]->cpuPercent = 100 * (procArray[i]->tTime / seconds);
     }
-
-    // Enter your own username here!!!
-    chdir("/../u/<Your Username Here/CS431/Project/"); // Change back to working directory
+    chdir("/../u/<Your name here!>/CS431/Project/"); // Change back to working directory
     return 1;
 }
