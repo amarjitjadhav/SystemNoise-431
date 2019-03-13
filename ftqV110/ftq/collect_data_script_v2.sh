@@ -47,8 +47,8 @@ cd "/home/$username/cs431/SystemNoise-431/ftqV110/ftq"
 filename="wyeast$node_num"
 
 #make directory for node data in data folder
-rm -r $data_dir/$node_num
-mkdir $data_dir/$node_num
+#rm -r $data_dir/$node_num
+mkdir -p $data_dir/$node_num
 
 echo "Filename: $filename"
 echo "Number of samples: $num_samples"
@@ -67,7 +67,7 @@ echo "Executing ./ftq -o $filename -i $bits_i -n $num_samples..."
 ./ftq -o $filename -i $bits_i -n $num_samples
 echo "Creating folder $data_dir/$node_num/ftq..."
 #make ftq dir to store results
-mkdir $data_dir/$node_num/ftq
+mkdir -p $data_dir/$node_num/ftq
 echo "Copying wyeast$node_num*.dat to $data_dir/all "
 cp wyeast$node_num*.dat $data_dir/all/ftq
 echo "Moving wyeast$node_num*.dat to $data_dir/$node_num/ftq..."
@@ -79,7 +79,7 @@ echo "Executing ./t_ftq -o $filename -i $bits_i -n $num_samples -t $num_threads.
 ./t_ftq -o $filename -i $bits_i -n $num_samples -t $num_threads
 echo "Creating folder $data_dir/$node_num/t_ftq..."
 #make t_ftq dir to store results
-mkdir $data_dir/$node_num/t_ftq
+mkdir -p $data_dir/$node_num/t_ftq
 echo "Copying wyeast$node_num*.dat to $data_dir/all "
 cp wyeast$node_num*.dat $data_dir/all/t_ftq
 echo "Moving wyeast$node_num*.dat to $data_dir/$node_num/t_ftq..."
@@ -91,7 +91,7 @@ echo "Executing ./fwq -o $filename -w $bits_w -n $num_samples..."
 ./fwq -o $filename -w $bits_w -n $num_samples
 echo "Creating folder $data_dir/$node_num/fwq..."
 #make fwq dir to store results
-mkdir $data_dir/$node_num/fwq
+mkdir -p $data_dir/$node_num/fwq
 echo "Copying wyeast$node_num*.dat to $data_dir/all "
 cp wyeast$node_num*.dat $data_dir/all/fwq
 echo "Moving wyeast$node_num*.dat to $data_dir/$node_num/fwq..."
@@ -103,11 +103,11 @@ echo "Executing ./t_fwq -o $filename -w $bits_w -n $num_samples -t $num_threads.
 ./t_fwq -o $filename -w $bits_w -n $num_samples -t $num_threads
 echo "Creating folder $data_dir/$node_num/t_fwq..."
 #make t_fwq dir to store results
-mkdir $data_dir/$node_num/t_fwq
+mkdir -p $data_dir/$node_num/t_fwq
 echo "Copying wyeast$node_num*.dat to $data_dir/all "
 cp wyeast$node_num*.dat $data_dir/all/t_fwq
 echo "Moving wyeast$node_num*.dat to $data_dir/$node_num/t_fwq..."
 mv wyeast$node_num*.dat $data_dir/$node_num/t_fwq
 
 echo "Data has been written to $data_dir/all and $data_dir/$node_num"
-echo "Done."
+echo "wyeast$node_num: Done."

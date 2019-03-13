@@ -9,3 +9,7 @@ Example:
 
         After I change it to be correct for me:
             chdir("/../u/kodavis/CS431/Project/"); 
+
+(You might have to change the full path if it is differrent then above ^^)
+mrh8: 
+chdir("/../home/mrh8/cs431/SystemNoise-431/"); // Change back to working directory
